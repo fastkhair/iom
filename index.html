@@ -152,6 +152,9 @@
   .field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--primary-soft);border-color:var(--primary)}
   .proc-block{border:1px dashed var(--st-po);background:var(--st-po-bg);border-radius:12px;padding:14px 16px;margin-top:4px}
   .proc-block .lbl{font-weight:800;color:var(--st-po);font-size:12.5px;margin-bottom:10px;letter-spacing:.3px}
+  .rp-wrap{position:relative}
+  .rp-wrap .rp-pre{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:700;font-size:13px;pointer-events:none}
+  .rp-wrap input{padding-left:36px!important;text-align:left}
 
   .btn{font:inherit;font-weight:700;cursor:pointer;border-radius:10px;padding:11px 18px;border:1px solid transparent}
   .btn-primary{background:var(--primary);color:#fff}
@@ -232,9 +235,10 @@
   .pd-hist th,.pd-hist td{border:1px solid #bbb;padding:5px 7px;text-align:left;vertical-align:top}
   .pd-hist th{background:#eef2ef;font-weight:700}
   .pd-status{margin:10px 0 0;font-size:13px}
-  .pd-sign{display:flex;justify-content:space-between;margin-top:40px;font-size:13px;text-align:center}
-  .pd-sign div{width:44%}
-  .pd-sign .nm{margin-top:64px;font-weight:600;border-top:1px solid #333;padding-top:3px;display:inline-block;min-width:170px}
+  .pd-sign{display:flex;justify-content:space-between;margin-top:34px;font-size:13px}
+  .pd-sign .col{width:46%;text-align:center}
+  .pd-sign .role{margin-bottom:4px}
+  .pd-sign .line{margin-top:66px;font-weight:600;border-top:1px solid #333;padding-top:4px;display:block;width:200px;margin-left:auto;margin-right:auto}
 </style>
 </head>
 <body>
@@ -271,7 +275,7 @@
       <input type="search" id="q" placeholder="🔎 Cari nomor, judul, pemohon, lokasi…">
       <select id="fUnit">
         <option value="">Semua Unit</option>
-        <option>PG-TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>Yayasan</option>
+        <option>PG-TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>Manajemen</option><option>Yayasan</option>
       </select>
       <select id="fJenis">
         <option value="">Semua Jenis</option>
@@ -295,7 +299,7 @@
         <div class="field">
           <label>Unit Pemohon *</label>
           <select id="i_unit"><option value="">— pilih —</option>
-            <option>PG-TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>Yayasan</option>
+            <option>PG-TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>Manajemen</option><option>Yayasan</option>
           </select>
         </div>
         <div class="field">
@@ -347,7 +351,10 @@
       <div id="procFields" class="proc-block" style="display:none">
         <div class="lbl">RINCIAN PENGADAAN (opsional, untuk barang inventaris)</div>
         <div class="grid2">
-          <div class="field"><label>Estimasi Biaya (Rp)</label><input id="i_biaya" type="number" placeholder="0"></div>
+          <div class="field"><label>Estimasi Biaya</label>
+            <div class="rp-wrap"><span class="rp-pre">Rp</span>
+              <input id="i_biaya" type="text" inputmode="numeric" oninput="rupiahFmt(this)" placeholder="0"></div>
+          </div>
           <div class="field"><label>Calon Vendor / Toko</label><input id="i_vendor" placeholder="Nama vendor (jika ada)"></div>
         </div>
       </div>
@@ -501,6 +508,17 @@ function fmt(iso){
 function fmtShort(iso){ return new Date(iso).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}); }
 function daysSince(iso){ return Math.floor((Date.now()-new Date(iso).getTime())/86400000); }
 function rupiah(n){ return n ? 'Rp '+Number(n).toLocaleString('id-ID') : '-'; }
+// Format input biaya menjadi ribuan saat diketik (mis. 700000 -> 700.000)
+function rupiahFmt(el){
+  const d = el.value.replace(/\D/g,'');
+  el.value = d ? Number(d).toLocaleString('id-ID') : '';
+}
+// Ambil nilai numeric dari input biaya berformat (mis. "700.000" -> 700000)
+function parseRupiah(el){
+  if(!el) return null;
+  const d = el.value.replace(/\D/g,'');
+  return d ? Number(d) : null;
+}
 function lastUpdate(it){ return it.riwayat[it.riwayat.length-1].waktu; }
 function isStale(it){ return ACTIVE(it.status) && daysSince(lastUpdate(it)) >= STALE_DAYS; }
 
@@ -666,8 +684,8 @@ function openDetail(id){
       </table>
       <p class="pd-status">Status saat ini: <b>${it.status}</b></p>
       <div class="pd-sign">
-        <div>Pemohon,<div class="nm">${esc(it.pemohon)}</div></div>
-        <div>Mengetahui / Penindak,<div class="nm">&nbsp;</div></div>
+        <div class="col"><div class="role">Pemohon,</div><div class="line">${esc(it.pemohon)}</div></div>
+        <div class="col"><div class="role">Mengetahui / Penindak,</div><div class="line">&nbsp;</div></div>
       </div>
     </div>
     <div class="mhead">
@@ -700,7 +718,10 @@ function openDetail(id){
           <div class="field"><label>Pencatat</label><input id="u_by" value="${esc(IDENT.name||'')}" placeholder="Nama Anda"></div>
         </div>
         ${isProc?`<div class="grid2">
-          <div class="field"><label>Estimasi biaya (Rp)</label><input id="u_biaya" type="number" value="${it.biaya||''}"></div>
+          <div class="field"><label>Estimasi biaya</label>
+            <div class="rp-wrap"><span class="rp-pre">Rp</span>
+              <input id="u_biaya" type="text" inputmode="numeric" oninput="rupiahFmt(this)" value="${it.biaya?Number(it.biaya).toLocaleString('id-ID'):''}"></div>
+          </div>
           <div class="field"><label>Vendor / No. PO</label><input id="u_vendor" value="${esc(it.vendor||'')}"></div>
         </div>`:''}
         <div class="field"><label>Catatan</label><textarea id="u_note" placeholder="Keterangan tindakan / kendala…"></textarea></div>
@@ -724,7 +745,7 @@ async function applyUpdate(id){
   const note=$('#u_note').value.trim();
   if(it.jenis==='Pengadaan Inventaris'){
     const b=$('#u_biaya'); const v=$('#u_vendor');
-    if(b) it.biaya = b.value? Number(b.value): it.biaya;
+    if(b) it.biaya = parseRupiah(b);
     if(v) it.vendor = v.value.trim();
   }
   it.status=status;
@@ -752,7 +773,7 @@ $('#saveBtn').addEventListener('click', async ()=>{
   if(!unit||!pemohon||!judul||!desc){ alert('Lengkapi field bertanda * (Unit, Pemohon, Judul, Uraian).'); return; }
   const it={
     id:genId(), unit, pemohon, tujuan, jenis, prioritas:pri, judul, lokasi, desc,
-    biaya: jenis==='Pengadaan Inventaris' ? (Number($('#i_biaya').value)||null):null,
+    biaya: jenis==='Pengadaan Inventaris' ? parseRupiah($('#i_biaya')):null,
     vendor: jenis==='Pengadaan Inventaris' ? $('#i_vendor').value.trim():'',
     status:'Diajukan',
     riwayat:[{waktu:now(),status:'Diajukan',catatan:'IOM diajukan.',oleh:pemohon}]
