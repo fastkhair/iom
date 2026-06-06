@@ -475,7 +475,10 @@ const Store = {
 /* =========================== STATE & KONSTAN =========================== */
 let DATA = [];
 let IDENT = { name:'', role:'Pemohon' };
-let CFG = { scriptUrl:'' };
+// URL Web App Apps Script bawaan (tertanam) — perangkat baru otomatis tersambung.
+// Bisa ditimpa per-perangkat lewat tab Pengaturan bila suatu saat di-deploy ulang.
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxAT6e-uly0j_4jzYnNENlVqWdSuP23ch7kE3TOrRiI4HGcsgbY11RXXFyYOb8OGaMo/exec';
+let CFG = { scriptUrl: DEFAULT_SCRIPT_URL };
 let filter = { q:'', unit:'', jenis:'', status:'', staleOnly:false };
 const STALE_DAYS = 3; // dianggap "mandek" bila > 3 hari tanpa update & belum selesai
 
@@ -912,7 +915,8 @@ $('#refreshBtn').addEventListener('click', ()=>refreshFromBackend(true));
   $('#set_name').value=IDENT.name; $('#set_role').value=IDENT.role; refreshWho();
   if(IDENT.name) $('#i_pemohon').value=IDENT.name;
 
-  CFG = await Store.loadCfg() || { scriptUrl:'' };
+  CFG = await Store.loadCfg() || {};
+  if(!CFG.scriptUrl) CFG.scriptUrl = DEFAULT_SCRIPT_URL;
   $('#set_script').value = CFG.scriptUrl || '';
 
   // muat salinan lokal lebih dulu (tampil cepat / offline)
